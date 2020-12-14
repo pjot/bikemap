@@ -27,5 +27,5 @@ Application Options:
   -o, --out-file= Output filename
 
 Help Options:
-  -h, --help      Show this help message```
+  -h, --help      Show this help message
 
