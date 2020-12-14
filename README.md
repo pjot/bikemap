@@ -9,7 +9,7 @@ CLI application that renders a map of Strava activities. It uses openstreetmap t
 * Settings > My Account > "Download or Delete Your Account" [Get Started] > #2
 * You'll end up on https://www.strava.com/athlete/delete_your_account
 * Request Your Archive
-* You will get an export of all your Strava data in your email
+* You will get an export of all your Strava data in your email. This might take a while and is only possible to do once a week.
 ### 2. Run the program!
 * `./bikemap -i <export-dir>/activities/ -o file.png -c Stockholm`
 * 3 arguments are required, `--in-dir/-i`, `--out-file/-o`, `--center/-c`.
