@@ -1,5 +1,5 @@
 # bikemap
-CLI application that renders a map of Strava activities.
+CLI application that renders a map of Strava activities. It uses openstreetmap to figure out where to center the map from a user-supplied location.
 
 ## Installation
 `go get && go build`
