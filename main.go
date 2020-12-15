@@ -23,10 +23,19 @@ type Point struct {
 }
 
 func readGPX(file string) []Point {
-	data, _ := ioutil.ReadFile(file)
-	gpxFile, _ := gpx.ParseBytes(data)
-
 	points := []Point{}
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		fmt.Println("Unable to open", file, "continuing anyway.")
+		return points
+	}
+
+	gpxFile, err := gpx.ParseBytes(data)
+	if err != nil {
+		fmt.Println("Unable to parse", file, "continuing anyway.")
+		return points
+	}
+
 	for _, track := range gpxFile.Tracks {
 		for _, segment := range track.Segments {
 			for _, point := range segment.Points {
@@ -41,16 +50,34 @@ func readGPX(file string) []Point {
 }
 
 func readFit(file string) []Point {
-	fi, _ := os.Open(file)
-	defer fi.Close()
-
-	data, _ := gzip.NewReader(fi)
-	defer data.Close()
-
-	fitFile, _ := fit.Decode(data)
-	activity, _ := fitFile.Activity()
-
 	points := []Point{}
+
+	fi, err := os.Open(file)
+	defer fi.Close()
+	if err != nil {
+		fmt.Println("Unable to open", file, "continuing anyway.")
+		return points
+	}
+
+	data, err := gzip.NewReader(fi)
+	defer data.Close()
+	if err != nil {
+		fmt.Println("Unable to unzip", file, "continuing anyway.")
+		return points
+	}
+
+	fitFile, err := fit.Decode(data)
+	if err != nil {
+		fmt.Println("Unable to parse", file, "continuing anyway.")
+		return points
+	}
+
+	activity, err := fitFile.Activity()
+	if err != nil {
+		fmt.Println("Unable to find activity in", file, "continuing anyway.")
+		return points
+	}
+
 	for _, p := range activity.Records {
 		points = append(
 			points,
@@ -97,42 +124,6 @@ func createImage(width int, height int, background color.RGBA) *image.RGBA {
 	img := image.NewRGBA(rect)
 	draw.Draw(img, img.Bounds(), &image.Uniform{background}, image.ZP, draw.Src)
 	return img
-}
-
-func gpxPoints(activities string) [][]Point {
-	gpxs, _ := filepath.Glob(activities + "*.gpx")
-	fmt.Printf("Found %d .gpx files...", len(gpxs))
-
-	tracks := [][]Point{}
-	for i, file := range gpxs {
-		if i%10 == 0 {
-			fmt.Print(".")
-		}
-		points := readGPX(file)
-		tracks = append(tracks, points)
-	}
-
-	fmt.Println("done.")
-	return tracks
-}
-
-func fitPoints(activities string) [][]Point {
-	fits, _ := filepath.Glob(activities + "*.fit.gz")
-	fmt.Printf("Found %d .fit.gz files...", len(fits))
-
-	tracks := [][]Point{}
-	for i, file := range fits {
-		if i%10 == 0 {
-			fmt.Print(".")
-		}
-		points := readFit(file)
-		if len(points) > 0 {
-			tracks = append(tracks, points)
-		}
-	}
-
-	fmt.Println("done.")
-	return tracks
 }
 
 type Config struct {
@@ -206,16 +197,25 @@ func indices(line []string) (int, int) {
 }
 
 func getActivities(directory string) []Activity {
+	activities := []Activity{}
 	file := filepath.Join(directory, "activities.csv")
 
-	csvFile, _ := os.Open(file)
+	csvFile, err := os.Open(file)
 	defer csvFile.Close()
+	if err != nil {
+		fmt.Println("Unable to open", file, "continuing anyway.")
+		return activities
+	}
 
 	r := csv.NewReader(csvFile)
-	line, _ := r.Read()
+	line, err := r.Read()
+	if err != nil {
+		fmt.Println("Unable to read from", file, "continuing anyway.")
+		return activities
+	}
+
 	kindIndex, fileIndex := indices(line)
 
-	activities := []Activity{}
 	fmt.Print("Parsing activities")
 	for {
 		line, err := r.Read()
