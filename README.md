@@ -4,7 +4,7 @@ CLI application that renders a map of Strava activities. It uses openstreetmap t
 <img src="https://raw.githubusercontent.com/pjot/bikemap/main/static/example.png?raw=true" width="400" />
 
 ## Installation
-`go get && go build`
+Download the latest binary from [Releases](https://github.com/pjot/bikemap/releases) or build yourself: `go get && go build`
 
 ## Usage
 ### 1. Create a Download Request from Strava
