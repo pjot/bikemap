@@ -255,16 +255,26 @@ func main() {
 		"Walk":       color.RGBA{255, 200, 200, 255},
 	}
 
-	fmt.Printf("Generating %dx%d image...", cfg.width, cfg.height)
+	unmatched := make(map[string]int)
+	fmt.Printf("Generating %dx%d image", cfg.width, cfg.height)
 	for _, act := range activities {
 		color, ok := colors[act.kind]
 		if ok {
 			addLine(image, act.points, tx, ty, color)
+			fmt.Print(".")
 		} else {
-			fmt.Println("unmatched kind", act.kind)
+			fmt.Print("U")
+			unmatched[act.kind]++
 		}
 	}
 	fmt.Println("done.")
+	if len(unmatched) > 0 {
+		fmt.Println("Found unmatched activities:")
+		for k, v := range unmatched {
+			fmt.Println(v, k)
+		}
+		fmt.Println("These will not be in the image.")
+	}
 
 	fmt.Printf("Exporting image as %s...", cfg.out)
 	draw2dimg.SaveToPngFile(cfg.out, image)
