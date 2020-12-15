@@ -10,8 +10,9 @@ CLI application that renders a map of Strava activities. It uses openstreetmap t
 * You'll end up on https://www.strava.com/athlete/delete_your_account
 * Request Your Archive
 * You will get an export of all your Strava data in your email. This might take a while and is only possible to do once a week.
+* Unzip the file you get in your email
 ### 2. Run the program!
-* `./bikemap -i <export-dir>/activities/ -o file.png -c Stockholm`
+* `./bikemap -i ~/my-export-dir -o file.png -c Stockholm`
 * 3 arguments are required, `--in-dir/-i`, `--out-file/-o`, `--center/-c`.
 
 ### All command line arguments
@@ -23,8 +24,9 @@ Application Options:
       --height=   Height of output image (default: 500)
       --width=    Width of output image (default: 1000)
   -c, --center=   Location to center the map around
-  -i, --in-dir=   Directory where the activity fields are
+  -i, --in-dir=   Directory where the exported data is
   -o, --out-file= Output filename
+  -s, --scale=    Scale of map (bigger number shows more) (default: 1)
 
 Help Options:
   -h, --help      Show this help message
