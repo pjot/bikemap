@@ -1,6 +1,8 @@
 # bikemap
 CLI application that renders a map of Strava activities. It uses openstreetmap to figure out where to center the map from a user-supplied location.
 
+<img src="https://raw.githubusercontent.com/pjot/bikemap/main/static/example.png?raw=true" width="400" />
+
 ## Installation
 `go get && go build`
 
