@@ -139,19 +139,22 @@ type Config struct {
 	width, height          int
 	miny, maxy, minx, maxx float64
 	activities, inDir, out string
+	verbose                bool
 }
 
 func readConfig() Config {
 	var opts struct {
-		Height int     `long:"height" description:"Height of output image" default:"500"`
-		Width  int     `long:"width" description:"Width of output image" default:"1000"`
-		Center string  `short:"c" long:"center" description:"Location to center the map around" required:"true"`
-		InDir  string  `short:"i" long:"in-dir" description:"Directory where the exported data is" required:"true"`
-		Out    string  `short:"o" long:"out-file" description:"Output filename" required:"true"`
-		Scale  float64 `short:"s" long:"scale" description:"Scale of map (bigger number shows more)" default:"1"`
+		Height  int     `long:"height" description:"Height of output image" default:"500"`
+		Width   int     `long:"width" description:"Width of output image" default:"1000"`
+		Center  string  `short:"c" long:"center" description:"Location to center the map around" required:"true"`
+		InDir   string  `short:"i" long:"in-dir" description:"Directory where the exported data is" required:"true"`
+		Out     string  `short:"o" long:"out-file" description:"Output filename" required:"true"`
+		Scale   float64 `short:"s" long:"scale" description:"Scale of map (bigger number shows more)" default:"1"`
+		Verbose bool    `short:"v" long:"verbose" description:"Show more detailed output"`
 	}
 	_, err := flags.ParseArgs(&opts, os.Args)
 	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
@@ -170,21 +173,22 @@ func readConfig() Config {
 	xRange := (float64(opts.Width) / float64(opts.Height)) * 0.2 * opts.Scale / 2
 
 	cfg := Config{
-		miny:   location.Lat - yRange,
-		maxy:   location.Lat + yRange,
-		minx:   location.Lng - xRange,
-		maxx:   location.Lng + xRange,
-		width:  opts.Width,
-		height: opts.Height,
-		inDir:  opts.InDir,
-		out:    opts.Out,
+		miny:    location.Lat - yRange,
+		maxy:    location.Lat + yRange,
+		minx:    location.Lng - xRange,
+		maxx:    location.Lng + xRange,
+		width:   opts.Width,
+		height:  opts.Height,
+		inDir:   opts.InDir,
+		out:     opts.Out,
+		verbose: opts.Verbose,
 	}
 	return cfg
 }
 
 type Activity struct {
-	points []Point
-	kind   string
+	points         []Point
+	kind, fileName string
 }
 
 func indices(line []string) (int, int) {
@@ -218,8 +222,9 @@ func getActivities(directory string) []Activity {
 		if err == io.EOF {
 			break
 		}
-		file := filepath.Join(directory, line[fileIndex])
+		fileName := line[fileIndex]
 		kind := line[kindIndex]
+		file := filepath.Join(directory, fileName)
 		points := []Point{}
 		if strings.HasSuffix(file, ".gpx") {
 			points = readGPX(file)
@@ -230,6 +235,7 @@ func getActivities(directory string) []Activity {
 			activities = append(activities, Activity{
 				points,
 				kind,
+				fileName,
 			})
 		}
 		fmt.Print(".")
@@ -260,8 +266,15 @@ func main() {
 	for _, act := range activities {
 		color, ok := colors[act.kind]
 		if ok {
+			if cfg.verbose {
+				fmt.Println("Drawing", act.fileName)
+			}
 			addLine(image, act.points, tx, ty, color)
-			fmt.Print(".")
+			if cfg.verbose {
+				fmt.Println("done")
+			} else {
+				fmt.Print(".")
+			}
 		} else {
 			fmt.Print("U")
 			unmatched[act.kind]++
