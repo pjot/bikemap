@@ -8,6 +8,7 @@ import "image/color"
 import "image/draw"
 import "io"
 import "io/ioutil"
+import "math"
 import "path/filepath"
 import "os"
 import "strings"
@@ -88,6 +89,17 @@ func readFit(file string) []Point {
 }
 
 type T func(float64) float64
+
+func removeNaN(points []Point) []Point {
+	valid := []Point{}
+	for _, p := range points {
+		if math.IsNaN(p.x) || math.IsNaN(p.y) {
+			continue
+		}
+		valid = append(valid, p)
+	}
+	return valid
+}
 
 func addLine(image *image.RGBA, points []Point, tx T, ty T, color color.RGBA) {
 	gc := draw2dimg.NewGraphicContext(image)
@@ -231,7 +243,8 @@ func getActivities(directory string) []Activity {
 		} else if strings.HasSuffix(file, ".fit.gz") {
 			points = readFit(file)
 		}
-		if len(points) > 0 {
+		points = removeNaN(points)
+		if len(points) > 1 {
 			activities = append(activities, Activity{
 				points,
 				kind,
@@ -254,11 +267,17 @@ func main() {
 	tx := transformer(cfg.minx, cfg.maxx, cfg.width, false)
 
 	colors := map[string]color.RGBA{
-		"Ride":       color.RGBA{255, 255, 255, 255},
-		"Run":        color.RGBA{200, 255, 255, 255},
-		"Kayaking":   color.RGBA{255, 255, 200, 255},
-		"Nordic Ski": color.RGBA{200, 200, 255, 255},
-		"Walk":       color.RGBA{255, 200, 200, 255},
+		"Ride":            color.RGBA{255, 255, 255, 255},
+		"Run":             color.RGBA{200, 255, 255, 255},
+		"Workout":         color.RGBA{200, 255, 255, 255},
+		"Kayaking":        color.RGBA{255, 255, 200, 255},
+		"Canoe":           color.RGBA{255, 255, 200, 255},
+		"Swim":            color.RGBA{255, 255, 200, 255},
+		"Nordic Ski":      color.RGBA{200, 200, 255, 255},
+		"Backcountry Ski": color.RGBA{200, 200, 255, 255},
+		"Ice Skate":       color.RGBA{200, 200, 255, 255},
+		"Walk":            color.RGBA{255, 200, 200, 255},
+		"Hike":            color.RGBA{255, 200, 200, 255},
 	}
 
 	unmatched := make(map[string]int)
