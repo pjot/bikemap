@@ -18,9 +18,47 @@ import "github.com/llgcode/draw2d/draw2dimg"
 import "github.com/tkrajina/gpxgo/gpx"
 import "github.com/tormoder/fit"
 import "github.com/codingsince1985/geo-golang/openstreetmap"
+import "github.com/llehouerou/go-tcx"
 
 type Point struct {
 	x, y float64
+}
+
+func readTCX(file string) []Point {
+	points := []Point{}
+
+	fi, err := os.Open(file)
+	defer fi.Close()
+	if err != nil {
+		fmt.Println("Unable to open", file, "continuing anyway.")
+		return points
+	}
+
+	data, err := gzip.NewReader(fi)
+	defer data.Close()
+	if err != nil {
+		fmt.Println("Unable to unzip", file, "continuing anyway.")
+		return points
+	}
+
+	act, err := tcx.Parse(data)
+	if err != nil {
+		fmt.Println("Unable to parse", file, "continuing anyway.")
+		fmt.Println(err)
+		return points
+	}
+
+	for _, activity := range act.Activities {
+		for _, lap := range activity.Laps {
+			for _, point := range lap.Track {
+				points = append(
+					points,
+					Point{point.LongitudeInDegrees, point.LatitudeInDegrees},
+				)
+			}
+		}
+	}
+	return points
 }
 
 func readGPX(file string) []Point {
@@ -69,7 +107,7 @@ func readFit(file string) []Point {
 
 	fitFile, err := fit.Decode(data)
 	if err != nil {
-		fmt.Println("Unable to parse", file, "continuing anyway.")
+		fmt.Print("E")
 		return points
 	}
 
@@ -93,7 +131,7 @@ type T func(float64) float64
 func removeNaN(points []Point) []Point {
 	valid := []Point{}
 	for _, p := range points {
-		if math.IsNaN(p.x) || math.IsNaN(p.y) {
+		if math.IsNaN(p.x) || math.IsNaN(p.y) || p.x == 0 || p.y == 0 {
 			continue
 		}
 		valid = append(valid, p)
@@ -238,11 +276,17 @@ func getActivities(directory string) []Activity {
 		kind := line[kindIndex]
 		file := filepath.Join(directory, fileName)
 		points := []Point{}
+
 		if strings.HasSuffix(file, ".gpx") {
 			points = readGPX(file)
 		} else if strings.HasSuffix(file, ".fit.gz") {
 			points = readFit(file)
+		} else if strings.HasSuffix(file, ".tcx.gz") {
+			points = readTCX(file)
+		} else if len(fileName) > 0 {
+			fmt.Println("Ignoring file", fileName)
 		}
+
 		points = removeNaN(points)
 		if len(points) > 1 {
 			activities = append(activities, Activity{
